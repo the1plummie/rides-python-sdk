@@ -55,7 +55,7 @@ from uber_rides.errors import ServerError
 from uber_rides.errors import UberIllegalState
 
 from uber_rides.session import Session, OAuth2Credential
-import time, pprint, os.path
+import time, pprint, os.path, sys
 
 
 def authorization_code_grant_flow(credentials, storage_filename):
@@ -150,7 +150,10 @@ def get_estimate(orig=places['home'], dest=places['work'], detail=False):
         seat_count=1
     )
 
-    print('estimate', response.json.get('price').get('display'))
+    print('{time} estimate: {price}'.format(
+        time=time.strftime("%x %X"),
+        price=response.json.get('price').get('display')))
+
     if detail:
         pp.pprint('products[0]')
         pp.pprint(products[0])
@@ -159,4 +162,10 @@ def get_estimate(orig=places['home'], dest=places['work'], detail=False):
 
 
 if __name__ == '__main__':
-    get_estimate(orig=places['home'], dest=places['work'], detail=True)
+    while True:
+        try:
+            get_estimate(orig=places['home'], dest=places['work'])
+            time.sleep(30)
+        except KeyboardInterrupt:
+            sys.exit('exiting by user')
+
