@@ -118,8 +118,14 @@ places = {
     'work': { 'lat': 33.992140, 'long': -118.473471 },
 }
 
-def get_estimate(orig=places['home'], dest=places['work'], detail=False):
+def get_estimate(name_orig='home', name_dest='work', detail=False):
+    if name_orig not in places or name_dest not in places:
+        sys.exit('one or both unknown place names')
+
+    orig = places[name_orig]
+    dest = places[name_dest]
     storage = None
+
     if os.path.exists(utils.STORAGE_FILENAME):
         with open(utils.STORAGE_FILENAME, 'r') as storage_file:
             storage = safe_load(storage_file)
@@ -137,10 +143,26 @@ def get_estimate(orig=places['home'], dest=places['work'], detail=False):
 
     pp = pprint.PrettyPrinter(indent=2)
 
+    products1, response1 = _get_estimate_response(api_client, orig, dest)
+    products2, response2 = _get_estimate_response(api_client, dest, orig)
 
-    response = api_client.get_products(*orig.values())
-    products = response.json.get('products')
 
+    print('{time}: {place1}->{place2}: {price1}, {place2}->{place1}: {price2}'.format(
+        time=time.strftime("%x %X"),
+        place1=name_orig,
+        place2=name_dest,
+        price1=response1.json.get('fare').get('display'),
+        price2=response2.json.get('fare').get('display')
+    ))
+
+    if detail:
+        _print_detail(products1, response1)
+        _print_detail(products2, response2)
+
+
+def _get_estimate_response(api_client, orig, dest):
+    resp = api_client.get_products(*orig.values())
+    products = resp.json.get('products')
     response = api_client.estimate_ride(
         product_id=products[0].get('product_id'),
         start_latitude=orig['lat'],
@@ -149,23 +171,21 @@ def get_estimate(orig=places['home'], dest=places['work'], detail=False):
         end_longitude=dest['long'],
         seat_count=1
     )
+    return products, response
 
-    print('{time} estimate: {price}'.format(
-        time=time.strftime("%x %X"),
-        price=response.json.get('price').get('display')))
 
-    if detail:
-        pp.pprint('products[0]')
-        pp.pprint(products[0])
-        pp.pprint('response')
-        pp.pprint(response.json)
+def _print_detail(products, response):
+    pp.pprint('products[0]')
+    pp.pprint(products[0])
+    pp.pprint('response')
+    pp.pprint(response.json)
 
 
 if __name__ == '__main__':
     while True:
         try:
-            get_estimate(orig=places['home'], dest=places['work'])
-            time.sleep(30)
+            get_estimate(name_orig='home', name_dest='work', detail=False)
+            time.sleep(300)
         except KeyboardInterrupt:
             sys.exit('exiting by user')
 
