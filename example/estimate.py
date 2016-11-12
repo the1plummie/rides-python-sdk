@@ -57,6 +57,8 @@ from uber_rides.errors import UberIllegalState
 from uber_rides.session import Session, OAuth2Credential
 import time, pprint, os.path, sys
 
+pp = pprint.PrettyPrinter(indent=2)
+
 
 def authorization_code_grant_flow(credentials, storage_filename):
     """Get an access token through Authorization Code Grant.
@@ -140,8 +142,6 @@ def get_estimate(name_orig='home', name_dest='work', detail=False):
             credentials,
             utils.STORAGE_FILENAME,
         )
-
-    pp = pprint.PrettyPrinter(indent=2)
 
     products1, response1 = _get_estimate_response(api_client, orig, dest)
     products2, response2 = _get_estimate_response(api_client, dest, orig)
